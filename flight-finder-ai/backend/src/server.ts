@@ -5,10 +5,16 @@
 import express, { type Request, type Response, type NextFunction } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 import flightRoutes from './routes/flightRoutes.js';
 
-// Load environment variables
-dotenv.config();
+// Get the directory of the current module
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Load environment variables from backend/.env (works from any CWD)
+dotenv.config({ path: join(__dirname, '..', '.env') });
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -91,7 +97,7 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
 // Start Server
 // ==========================================
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log('\n✈️  ========================================');
   console.log('✈️  Flight Finder AI - Backend Server');
   console.log('✈️  ========================================');
@@ -101,6 +107,23 @@ app.listen(PORT, () => {
   console.log(`🤖 AI Model: claude-sonnet-4-5-20250929`);
   console.log(`🔑 API Key: ${process.env.ANTHROPIC_API_KEY ? '✅ Configured' : '❌ Missing'}`);
   console.log('✈️  ========================================\n');
+});
+
+// Handle graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('\n⚠️  SIGTERM received, closing server gracefully...');
+  server.close(() => {
+    console.log('✅ Server closed');
+    process.exit(0);
+  });
+});
+
+process.on('SIGINT', () => {
+  console.log('\n⚠️  SIGINT received, closing server gracefully...');
+  server.close(() => {
+    console.log('✅ Server closed');
+    process.exit(0);
+  });
 });
 
 export default app;
