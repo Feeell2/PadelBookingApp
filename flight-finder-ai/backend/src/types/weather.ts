@@ -67,15 +67,15 @@ export interface WeatherForecastResponse {
 }
 
 /**
- * Airport geographic data
+ * Airport geographic data (Amadeus API format)
  */
 export interface AirportLocation {
   iataCode: string;                // "BCN"
-  name: string;                    // "Barcelona-El Prat Airport"
-  city: string;                    // "Barcelona"
-  country: string;                 // "Spain"
+  name: string;                    // "BARCELONA"
+  cityName: string;                // "BARCELONA"
+  countryCode: string;             // "ES"
   coordinates: Coordinates;
-  timezone: string;                // "Europe/Madrid"
+  timeZoneOffset?: string;         // "+02:00"
 }
 
 /**
@@ -154,4 +154,45 @@ export interface CacheStats {
   misses: number;
   size: number;
   hitRate: number;
+}
+
+/**
+ * Amadeus City Search API Response
+ */
+export interface AmadeusLocationResponse {
+  meta: {
+    count: number;
+    links?: {
+      self: string;
+    };
+  };
+  data: Array<{
+    type: string;                  // "location"
+    subType: string;               // "CITY" or "AIRPORT"
+    name: string;                  // "BARCELONA"
+    detailedName?: string;         // "Barcelona, ES"
+    id: string;                    // "CBCN"
+    self?: {
+      href: string;
+      methods: string[];
+    };
+    timeZoneOffset?: string;       // "+02:00"
+    iataCode: string;              // "BCN"
+    geoCode: {
+      latitude: number;            // 41.2974
+      longitude: number;           // 2.0833
+    };
+    address: {
+      cityName: string;            // "BARCELONA"
+      cityCode?: string;           // "BCN"
+      countryName?: string;        // "SPAIN"
+      countryCode: string;         // "ES"
+      regionCode?: string;         // "EUROP"
+    };
+    analytics?: {
+      travelers: {
+        score: number;
+      };
+    };
+  }>;
 }

@@ -15,6 +15,7 @@ const ORIGINS = [
   { code: 'WAW', name: 'Warsaw' },
   { code: 'KRK', name: 'Kraków' },
   { code: 'GDN', name: 'Gdańsk' },
+  { code: 'MAD', name: 'Madryt' },
 ];
 
 const TRAVEL_STYLES = [
