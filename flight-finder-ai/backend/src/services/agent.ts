@@ -411,7 +411,6 @@ function filterAndRankInspirationResults(
 
   const rankedFlights = flights.map(flight => {
     let score = 0;
-
     // Travel style match (+10 points)
     if (matchesTravelStyle(flight.destination, preferences.travelStyle)) {
       score += 10;

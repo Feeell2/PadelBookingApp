@@ -417,6 +417,8 @@ function transformInspirationToOffers(
     return [];
   }
 
+  let currency = Object.keys(response.dictionaries?.currencies || {})[0];
+  
   return response.data.map((destination) => ({
     id: `inspiration-${destination.origin}-${destination.destination}-${destination.departureDate}`,
     origin: destination.origin,
@@ -425,7 +427,7 @@ function transformInspirationToOffers(
     departureDate: destination.departureDate,
     returnDate: destination.returnDate,
     price: parseFloat(destination.price.total),
-    currency: destination.price.currency,
+    currency: currency,
     airline: 'Various', // Inspiration API doesn't return specific airlines
     duration: calculateDuration(destination.departureDate, destination.returnDate),
     stops: 0, // Unknown from inspiration API, assume direct
