@@ -26,13 +26,6 @@ const TRAVEL_STYLES = [
   { value: 'nature', label: 'Nature', icon: '🌲' },
 ] as const;
 
-const WEATHER_PREFERENCES = [
-  { value: 'hot', icon: '☀️' },
-  { value: 'mild', icon: '🌤️' },
-  { value: 'cold', icon: '❄️' },
-  { value: 'any', icon: '🌍' },
-] as const;
-
 export default function FiltersBar({
   onSearch,
   onReset,
@@ -42,8 +35,6 @@ export default function FiltersBar({
   const [origin, setOrigin] = useState('WAW');
   const [travelStyle, setTravelStyle] =
     useState<UserPreferences['travelStyle']>('culture');
-  const [weatherPreference, setWeatherPreference] =
-    useState<UserPreferences['weatherPreference']>('mild');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,7 +42,6 @@ export default function FiltersBar({
       budget,
       origin,
       travelStyle,
-      weatherPreference,
     });
   };
 
@@ -59,7 +49,6 @@ export default function FiltersBar({
     setBudget(500);
     setOrigin('WAW');
     setTravelStyle('culture');
-    setWeatherPreference('mild');
     onReset();
   };
 
@@ -129,28 +118,6 @@ export default function FiltersBar({
                     title={style.label}
                   >
                     {style.icon}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Weather Filter */}
-            <div className="filter-group">
-              <label className="filter-label">
-                Weather
-              </label>
-              <div className="weather-buttons-grid">
-                {WEATHER_PREFERENCES.map((weather) => (
-                  <button
-                    key={weather.value}
-                    type="button"
-                    onClick={() => setWeatherPreference(weather.value)}
-                    disabled={loading}
-                    className={`weather-button ${
-                      weatherPreference === weather.value ? 'active' : ''
-                    }`}
-                  >
-                    {weather.icon}
                   </button>
                 ))}
               </div>

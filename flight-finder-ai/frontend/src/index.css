@@ -680,39 +680,6 @@ input[type='range'].slider::-moz-range-track {
   cursor: not-allowed;
 }
 
-.weather-buttons-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 6px;
-}
-
-.weather-button {
-  aspect-ratio: 1;
-  border-radius: 8px;
-  font-size: 1.5rem;
-  transition: all 0.2s;
-  border: none;
-  cursor: pointer;
-  background-color: rgb(31, 41, 55);
-  border: 1px solid rgb(55, 65, 81);
-}
-
-.weather-button:hover:not(:disabled) {
-  transform: scale(1.1);
-  border-color: rgb(168, 85, 247);
-}
-
-.weather-button.active {
-  background: linear-gradient(to bottom right, rgb(168, 85, 247), rgb(219, 39, 119));
-  box-shadow: 0 10px 25px rgba(168, 85, 247, 0.5);
-  border: none;
-}
-
-.weather-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
 .action-buttons {
   display: flex;
   gap: 12px;

@@ -78,7 +78,6 @@ export async function runFlightAgent(preferences: UserPreferences): Promise<Agen
       origin: preferences.origin,
       preferences: {
         travelStyle: preferences.travelStyle,
-        weatherPreference: preferences.weatherPreference,
         preferredDestinations: preferences.preferredDestinations,
       },
     });
@@ -145,7 +144,7 @@ function generateMockReasoning(
   const savings = preferences.budget - topFlight.price;
 
   let reasoning = `## ✈️ Flight Recommendations for Your ${preferences.travelStyle} Trip\n\n`;
-  reasoning += `Based on your preferences (budget: ${preferences.budget} PLN, origin: ${preferences.origin}, style: ${preferences.travelStyle}, weather: ${preferences.weatherPreference}), `;
+  reasoning += `Based on your preferences (budget: ${preferences.budget} PLN, origin: ${preferences.origin}, style: ${preferences.travelStyle}), `;
   reasoning += `I found **${flights.length} excellent option${flights.length > 1 ? 's' : ''}** for you.\n\n`;
 
   // Top recommendation
@@ -400,27 +399,6 @@ function matchesTravelStyle(destination: string, style: string): boolean {
   return preferredDestinations.includes(destination);
 }
 
-/**
- * Check if weather matches user preference
- */
-function matchesWeatherPreference(weatherData: WeatherData | undefined, preference: string): boolean {
-  if (preference === 'any' || !weatherData) {
-    return true;
-  }
-
-  const temp = weatherData.temperature;
-
-  switch (preference) {
-    case 'hot':
-      return temp > 25;
-    case 'mild':
-      return temp >= 15 && temp <= 25;
-    case 'cold':
-      return temp < 15;
-    default:
-      return true;
-  }
-}
 
 /**
  * Filter and rank inspiration results based on user preferences
@@ -437,11 +415,6 @@ function filterAndRankInspirationResults(
     // Travel style match (+10 points)
     if (matchesTravelStyle(flight.destination, preferences.travelStyle)) {
       score += 10;
-    }
-
-    // Weather preference match (+5 points)
-    if (matchesWeatherPreference(flight.weatherData, preferences.weatherPreference)) {
-      score += 5;
     }
 
     // Budget efficiency (+5 for <50%, +3 for <80%)
@@ -493,7 +466,7 @@ function generateInspirationReasoning(
   const savingsPercent = ((savings / preferences.budget) * 100).toFixed(0);
 
   let reasoning = `## ✈️ Personalized Travel Recommendations\n\n`;
-  reasoning += `Based on your preferences (budget: ${preferences.budget} PLN, origin: ${preferences.origin}, style: ${preferences.travelStyle}, weather: ${preferences.weatherPreference}), `;
+  reasoning += `Based on your preferences (budget: ${preferences.budget} PLN, origin: ${preferences.origin}, style: ${preferences.travelStyle}), `;
   reasoning += `I discovered **${flights.length} amazing destination${flights.length > 1 ? 's' : ''}** perfect for you.\n\n`;
 
   // Top recommendation
@@ -517,9 +490,6 @@ function generateInspirationReasoning(
   reasoning += `**Why ${topFlight.destination}?**\n`;
   if (matchesTravelStyle(topFlight.destination, preferences.travelStyle)) {
     reasoning += `- ✓ Perfect match for ${preferences.travelStyle} enthusiasts\n`;
-  }
-  if (topFlight.weatherData && matchesWeatherPreference(topFlight.weatherData, preferences.weatherPreference)) {
-    reasoning += `- ✓ Weather matches your ${preferences.weatherPreference} preference\n`;
   }
   reasoning += `- ✓ Excellent value - ${savingsPercent}% under your budget\n`;
   if (topFlight.stops === 0) {

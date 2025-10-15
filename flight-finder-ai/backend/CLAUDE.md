@@ -88,7 +88,7 @@ src/
 ```
 POST /api/flights/search
     ↓ flightController.searchFlights()
-        ↓ Validate budget, origin, travelStyle, weatherPreference
+        ↓ Validate budget, origin, travelStyle
     ↓ agent.searchFlightInspiration()
         ↓ amadeusAPI.searchFlightInspiration(origin, maxPrice)
             ↓ OAuth token (cached, 30s buffer)
@@ -100,7 +100,7 @@ POST /api/flights/search
             ↓ WeatherService.batchGetWeatherForFlights()
                 ↓ Promise.allSettled (100% success rate)
         ↓ agent.filterAndRankInspirationResults()
-            ↓ Scoring: style +10, weather +5, budget +3-5, preferred +15
+            ↓ Scoring: style +10, budget +3-5, preferred +15, direct +3
         ↓ agent.generateInspirationReasoning()
             ↓ Markdown with savings, checkmarks, weather
     ↓ Return JSON response
@@ -124,7 +124,6 @@ generateInspirationReasoning()        // Markdown explanation
 ```typescript
 score = 0
   + (travelStyle match ? 10 : 0)      // culture → Prague, Budapest
-  + (weather match ? 5 : 0)           // mild → 15-25°C
   + (price < 50% budget ? 5 : 0)      // Excellent budget efficiency
   + (price < 80% budget ? 3 : 0)      // Good budget efficiency
   + (preferred destination ? 15 : 0)  // User's explicit preference
@@ -205,7 +204,6 @@ FRONTEND_URL=http://localhost:5173
   budget: number;                    // PLN (0-50000)
   origin: string;                    // IATA code (WAW, KRK, GDN)
   travelStyle: 'adventure' | 'relaxation' | 'culture' | 'party' | 'nature';
-  weatherPreference: 'hot' | 'mild' | 'cold' | 'any';
   preferredDestinations?: string[];  // Optional city names
   departureDate?: string;            // Optional YYYY-MM-DD
   returnDate?: string;
@@ -292,8 +290,7 @@ curl -X POST http://localhost:3001/api/flights/search \
   -d '{
     "budget": 500,
     "origin": "WAW",
-    "travelStyle": "culture",
-    "weatherPreference": "mild"
+    "travelStyle": "culture"
   }'
 ```
 

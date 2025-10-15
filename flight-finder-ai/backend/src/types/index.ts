@@ -9,7 +9,6 @@ export interface UserPreferences {
   budget: number;
   origin: string;
   travelStyle: 'adventure' | 'relaxation' | 'culture' | 'party' | 'nature';
-  weatherPreference: 'hot' | 'mild' | 'cold' | 'any';
   preferredDestinations?: string[];
   departureDate?: string; // YYYY-MM-DD
   returnDate?: string; // YYYY-MM-DD
@@ -115,7 +114,6 @@ export interface SearchFlightsInput {
   origin: string;
   preferences: {
     travelStyle: string;
-    weatherPreference: string;
     preferredDestinations?: string[];
   };
 }

@@ -9,7 +9,6 @@ export interface UserPreferences {
   budget: number;
   origin: string;
   travelStyle: 'adventure' | 'relaxation' | 'culture' | 'party' | 'nature';
-  weatherPreference: 'hot' | 'mild' | 'cold' | 'any';
   preferredDestinations?: string[];
   departureDate?: string;
   returnDate?: string;

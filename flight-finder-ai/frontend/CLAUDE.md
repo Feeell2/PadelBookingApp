@@ -135,9 +135,8 @@ handleReset()                               // Clear results and errors
 
 **Inputs**:
 - Budget (0-50000 PLN) with range slider
-- Origin airport (WAW, KRK, GDN)
+- Origin airport (WAW, KRK, GDN, MAD)
 - Travel style (adventure, relaxation, culture, party, nature)
-- Weather preference (hot, mild, cold, any)
 - Optional: Preferred destinations (comma-separated)
 - Optional: Departure/return dates
 
@@ -145,7 +144,6 @@ handleReset()                               // Clear results and errors
 - Budget must be > 0
 - Origin must be selected
 - Travel style must be selected
-- Weather preference must be selected
 
 ### AgentThinking.tsx
 
@@ -246,7 +244,6 @@ interface UserPreferences {
   budget: number;
   origin: string;
   travelStyle: 'adventure' | 'relaxation' | 'culture' | 'party' | 'nature';
-  weatherPreference: 'hot' | 'mild' | 'cold' | 'any';
   preferredDestinations?: string[];
   departureDate?: string;
   returnDate?: string;
@@ -438,7 +435,6 @@ const results = await searchFlights({
   budget: 500,
   origin: 'WAW',
   travelStyle: 'culture',
-  weatherPreference: 'mild',
 });
 
 console.log('Recommendations:', results.recommendations);

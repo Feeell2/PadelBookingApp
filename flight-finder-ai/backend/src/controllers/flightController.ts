@@ -25,11 +25,6 @@ function validateUserPreferences(body: any): { valid: boolean; error?: string } 
     return { valid: false, error: `Travel style must be one of: ${validTravelStyles.join(', ')}` };
   }
 
-  const validWeatherPreferences = ['hot', 'mild', 'cold', 'any'];
-  if (!body.weatherPreference || !validWeatherPreferences.includes(body.weatherPreference)) {
-    return { valid: false, error: `Weather preference must be one of: ${validWeatherPreferences.join(', ')}` };
-  }
-
   return { valid: true };
 }
 
@@ -61,7 +56,6 @@ export async function searchFlights(req: Request, res: Response): Promise<void> 
       budget: req.body.budget,
       origin: req.body.origin,
       travelStyle: req.body.travelStyle,
-      weatherPreference: req.body.weatherPreference,
       preferredDestinations: req.body.preferredDestinations,
       departureDate: req.body.departureDate,
       returnDate: req.body.returnDate,
