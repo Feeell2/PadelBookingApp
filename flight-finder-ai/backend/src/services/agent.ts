@@ -5,6 +5,8 @@
 import type { UserPreferences, AgentResponse, FlightOffer, WeatherData } from '../types/index.js';
 import { searchFlights, getWeather } from './flightAPI.js';
 import { searchFlightInspiration } from './amadeusAPI.js';
+import { weatherService } from './weather/WeatherService.js';
+import { batchGetAirportLocations } from './OpenMeteoGeocodingService.js';
 
 /**
  * Flight Agent with Amadeus Inspiration API Integration
@@ -226,37 +228,147 @@ function calculatePreferredDuration(preferences: UserPreferences): number {
 }
 
 /**
- * Enrich flight offers with real-time weather data
+ * Enrich flight offers with REAL weather data (Open-Meteo + Amadeus Geocoding)
+ * OPTIMIZED: Batch geocoding to reduce API calls
+ * Fallback: Real API → Mock → No weather (graceful degradation)
  */
 async function enrichWithWeather(flights: FlightOffer[]): Promise<FlightOffer[]> {
-  console.log(`\n🌤️  [Agent] Enriching ${flights.length} flights with weather data...`);
+  console.log(`\n🌤️  [Agent] Enriching ${flights.length} flights with REAL weather (Open-Meteo)...`);
 
-  const enrichmentPromises = flights.map(async (flight) => {
-    try {
-      // For now, convert mock weather to WeatherData format
-      const mockWeather = getWeather({ destinationCode: flight.destinationCode });
+  if (flights.length === 0) {
+    console.log(`✅ [Agent] No flights to enrich`);
+    return [];
+  }
 
-      if (!mockWeather) {
+  // STEP 1: Batch geocode all unique destination codes (OPTIMIZATION)
+  const destinationCodes = flights.map(f => f.destinationCode);
+  let airportLocations: Map<string, any>;
+
+  try {
+    airportLocations = await batchGetAirportLocations(destinationCodes);
+    console.log(`✅ [Agent] Batch geocoding: ${airportLocations.size} locations fetched`);
+  } catch (error: any) {
+    console.error(`❌ [Agent] Batch geocoding failed: ${error.message}`);
+    console.log(`🔄 [Agent] Falling back to mock weather for all flights...`);
+
+    // Fallback to mock weather for all flights
+    return flights.map(flight => {
+      try {
+        const mockWeather = getWeather({ destinationCode: flight.destinationCode });
+        if (!mockWeather) {
+          return flight;
+        }
+
+        const weatherData: WeatherData = {
+          destination: flight.destination,
+          destinationCode: flight.destinationCode,
+          temperature: mockWeather.temperature,
+          condition: mockWeather.condition,
+          description: mockWeather.forecast,
+          humidity: mockWeather.humidity,
+          fetchedAt: new Date().toISOString(),
+        };
+
+        console.log(`🔄 [Agent] Using mock weather for ${flight.destinationCode}`);
+        return { ...flight, weatherData };
+      } catch {
         return flight;
+      }
+    });
+  }
+
+  // STEP 2: Fetch weather for each flight using pre-fetched coordinates
+  const enrichmentPromises = flights.map(async (flight) => {
+    // Check if we have geocoding data
+    const location = airportLocations.get(flight.destinationCode);
+
+    if (!location) {
+      console.warn(`⚠️  [Agent] No geocoding data for ${flight.destinationCode}, trying mock fallback...`);
+
+      // TRY: Mock fallback
+      try {
+        const mockWeather = getWeather({ destinationCode: flight.destinationCode });
+
+        if (!mockWeather) {
+          throw new Error('No mock weather available');
+        }
+
+        const weatherData: WeatherData = {
+          destination: flight.destination,
+          destinationCode: flight.destinationCode,
+          temperature: mockWeather.temperature,
+          condition: mockWeather.condition,
+          description: mockWeather.forecast,
+          humidity: mockWeather.humidity,
+          fetchedAt: new Date().toISOString(),
+        };
+
+        console.log(`🔄 [Agent] Using mock weather for ${flight.destinationCode}`);
+        return { ...flight, weatherData };
+
+      } catch (mockError) {
+        console.warn(`⚠️  [Agent] Mock fallback also failed for ${flight.destinationCode}`);
+        return flight;
+      }
+    }
+
+    try {
+      // TRY 1: Real API (Open-Meteo with pre-fetched coordinates)
+      const weatherResponse = await weatherService.getForecastWithLocation(
+        location,
+        flight.departureDate,
+        7
+      );
+
+      // Convert WeatherForecast[] to simple WeatherData for backward compatibility
+      const firstForecast = weatherResponse.forecasts[0];
+      if (!firstForecast) {
+        throw new Error('No forecast data');
       }
 
       const weatherData: WeatherData = {
         destination: flight.destination,
         destinationCode: flight.destinationCode,
-        temperature: mockWeather.temperature,
-        condition: mockWeather.condition,
-        description: mockWeather.forecast,
-        humidity: mockWeather.humidity,
+        temperature: firstForecast.temperature.avg,
+        condition: firstForecast.conditions.main,
+        description: firstForecast.conditions.description,
+        humidity: firstForecast.humidity,
+        windSpeed: firstForecast.wind.speed,
         fetchedAt: new Date().toISOString(),
       };
 
-      return {
-        ...flight,
-        weatherData,
-      };
+      console.log(`✅ [Agent] Real weather for ${flight.destinationCode}: ${weatherData.temperature}°C, ${weatherData.condition}`);
+      return { ...flight, weatherData };
+
     } catch (error: any) {
-      console.log(`⚠️  [Agent] Failed to fetch weather for ${flight.destinationCode}: ${error.message}`);
-      return flight;
+      console.warn(`⚠️  [Agent] Real API failed for ${flight.destinationCode}: ${error.message}`);
+
+      // TRY 2: Mock fallback
+      try {
+        const mockWeather = getWeather({ destinationCode: flight.destinationCode });
+
+        if (!mockWeather) {
+          throw new Error('No mock weather available');
+        }
+
+        const weatherData: WeatherData = {
+          destination: flight.destination,
+          destinationCode: flight.destinationCode,
+          temperature: mockWeather.temperature,
+          condition: mockWeather.condition,
+          description: mockWeather.forecast,
+          humidity: mockWeather.humidity,
+          fetchedAt: new Date().toISOString(),
+        };
+
+        console.log(`🔄 [Agent] Using mock weather for ${flight.destinationCode}`);
+        return { ...flight, weatherData };
+
+      } catch (mockError) {
+        console.warn(`⚠️  [Agent] Mock fallback also failed for ${flight.destinationCode}`);
+        // TRY 3: Return flight without weather (graceful degradation)
+        return flight;
+      }
     }
   });
 
@@ -267,7 +379,7 @@ async function enrichWithWeather(flights: FlightOffer[]): Promise<FlightOffer[]>
     .map(result => result.value);
 
   const successRate = (enrichedFlights.filter(f => f.weatherData).length / flights.length) * 100;
-  console.log(`✅ [Agent] Weather enrichment: ${successRate.toFixed(0)}% success rate`);
+  console.log(`✅ [Agent] Weather enrichment: ${successRate.toFixed(0)}% success rate (Real API + Mock fallback)`);
 
   return enrichedFlights;
 }

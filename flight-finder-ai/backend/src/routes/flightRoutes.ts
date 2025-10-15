@@ -3,7 +3,13 @@
 // ==========================================
 
 import { Router } from 'express';
-import { searchFlights, listDestinations, getDestinationWeather } from '../controllers/flightController.js';
+import {
+  searchFlights,
+  listDestinations,
+  getDestinationWeather,
+  getWeatherForecast,
+  getWeatherStatus
+} from '../controllers/flightController.js';
 
 const router = Router();
 
@@ -18,6 +24,18 @@ router.post('/flights/search', searchFlights);
  * Get list of available destinations
  */
 router.get('/destinations', listDestinations);
+
+/**
+ * GET /api/weather/status
+ * Check weather service status (must be before :destinationCode routes)
+ */
+router.get('/weather/status', getWeatherStatus);
+
+/**
+ * GET /api/weather/forecast/:destinationCode
+ * Get detailed weather forecast for destination
+ */
+router.get('/weather/forecast/:destinationCode', getWeatherForecast);
 
 /**
  * GET /api/weather/:destinationCode

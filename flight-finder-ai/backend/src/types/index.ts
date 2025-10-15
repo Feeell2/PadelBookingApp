@@ -238,3 +238,10 @@ export const FLIGHT_INSPIRATION_ERRORS = {
   API_ERROR: 'Failed to fetch flight inspiration data from Amadeus API.',
   TOKEN_ERROR: 'Failed to authenticate with Amadeus API.',
 } as const;
+
+// ==========================================
+// Weather Types Export
+// ==========================================
+
+// Export all weather types
+export * from './weather.js';
