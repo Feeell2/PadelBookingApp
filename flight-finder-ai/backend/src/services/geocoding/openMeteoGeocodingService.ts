@@ -7,9 +7,9 @@
 import type {
   AirportLocation,
   Coordinates,
-  OpenMeteoGeocodingResponse,
-} from '../types/weather.js';
-import { getCityNameForIATA, hasIATAMapping } from '../data/iataAirportMap.js';
+} from '../../types/weather.js';
+import type { OpenMeteoGeocodingResponse } from '../../types/openMeteo.js';
+import { getCityNameForIATA, hasIATAMapping } from '../../data/iataAirportMap.js';
 
 const GEOCODING_API_URL = 'https://geocoding-api.open-meteo.com/v1/search';
 const REQUEST_TIMEOUT = 5000; // 5 seconds

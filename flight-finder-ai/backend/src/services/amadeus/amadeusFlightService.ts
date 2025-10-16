@@ -1,94 +1,18 @@
 // ==========================================
-// Amadeus API Service (Pure Fetch - No SDK)
+// Amadeus Flight Service
+// Flight search and inspiration API integration
 // ==========================================
 
 import type {
-  AmadeusTokenResponse,
   AmadeusFlightResponse,
   AmadeusDestinationResponse,
-  FlightOffer,
   FlightInspirationParams
-} from '../types/index.js';
-import { FLIGHT_INSPIRATION_ERRORS } from '../types/index.js';
+} from '../../types/amadeus.js';
+import type { FlightOffer } from '../../types/flight.js';
+import { FLIGHT_INSPIRATION_ERRORS } from '../../types/amadeus.js';
+import { getAmadeusToken } from './amadeusAuthService.js';
 
-const AMADEUS_API_KEY = process.env.AMADEUS_API_KEY?.trim();
-const AMADEUS_API_SECRET = process.env.AMADEUS_API_SECRET?.trim();
 const AMADEUS_BASE_URL = 'https://test.api.amadeus.com';
-
-/**
- * Token cache (in-memory)
- */
-let cachedToken: {
-  access_token: string;
-  expires_at: number; // timestamp in ms
-} | null = null;
-
-/**
- * Get OAuth token from Amadeus API
- * Implements token caching with auto-refresh
- */
-export async function getAmadeusToken(): Promise<string> {
-  // Check if cached token is still valid);
-  if (cachedToken && Date.now() < cachedToken.expires_at) {
-    const validFor = Math.floor((cachedToken.expires_at - Date.now()) / 1000);
-    console.log(`💾 [Amadeus] Using cached token (valid for ${validFor}s)`);
-    return cachedToken.access_token;
-  }
-
-  console.log('🔑 [Amadeus] Requesting new OAuth token...');
-
-  if (!process.env.AMADEUS_API_KEY || !process.env.AMADEUS_API_SECRET) {
-    throw new Error('AMADEUS_API_KEY and AMADEUS_API_SECRET must be set in .env');
-  }
-
-  // Debug logging
-  console.log(`🔍 [Amadeus Debug] API Key length: ${process.env.AMADEUS_API_KEY.length}`);
-  console.log(`🔍 [Amadeus Debug] API Secret length: ${process.env.AMADEUS_API_SECRET.length}`);
-  console.log(`🔍 [Amadeus Debug] API Key first 10 chars: ${process.env.AMADEUS_API_KEY.substring(0, 10)}`);
-
-  const tokenUrl = `${AMADEUS_BASE_URL}/v1/security/oauth2/token`;
-
-  const body = new URLSearchParams({
-    grant_type: 'client_credentials',
-    client_id: process.env.AMADEUS_API_KEY,
-    client_secret: process.env.AMADEUS_API_SECRET,
-  });
-
-  try {
-    const response = await fetch(tokenUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: body.toString(),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('❌ [Amadeus] Token request failed');
-      console.error('   Status:', response.status);
-      console.error('   Response:', errorText);
-      console.error('   Request body:', body.toString());
-      throw new Error(`Amadeus token request failed: ${response.status} - ${errorText}`);
-    }
-
-    const data: AmadeusTokenResponse = await response.json();
-
-    // Cache token with 30s buffer before expiration
-    const expiresInMs = (data.expires_in - 30) * 1000;
-    cachedToken = {
-      access_token: data.access_token,
-      expires_at: Date.now() + expiresInMs,
-    };
-
-    console.log(`🔑 [Amadeus] Token obtained: ${data.access_token.substring(0, 20)}... (expires in ${data.expires_in}s)`);
-
-    return data.access_token;
-  } catch (error) {
-    console.error('❌ [Amadeus] Failed to obtain token:', error);
-    throw error;
-  }
-}
 
 /**
  * Search for flights using Amadeus Flight Offers Search API
@@ -129,8 +53,8 @@ export async function searchAmadeusFlights(
 
       // Handle 401 - token expired (shouldn't happen with caching, but just in case)
       if (response.status === 401) {
-        console.log('🔄 [Amadeus] Token expired, clearing cache and retrying...');
-        cachedToken = null;
+        console.log('🔄 [Amadeus] Token expired, retrying...');
+        // Auth service will handle token refresh
         // Retry once
         return searchAmadeusFlights(origin, destination, departureDate, adults, maxResults);
       }
@@ -361,7 +285,7 @@ export async function searchFlightInspiration(
     // Handle 401 - Token expired, retry once
     if (response.status === 401) {
       console.log('🔄 [Amadeus Inspiration] Token expired, retrying with fresh token...');
-      cachedToken = null; // Force refresh
+      // Token will be auto-refreshed by authService
       const newToken = await getAmadeusToken();
       const retryResponse = await fetch(url, {
         method: 'GET',

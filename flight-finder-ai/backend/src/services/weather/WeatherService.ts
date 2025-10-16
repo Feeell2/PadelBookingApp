@@ -8,8 +8,8 @@ import type {
   Coordinates,
   AirportLocation,
 } from '../../types/weather.js';
-import { OpenMeteoProvider } from './providers/OpenMeteoProvider.js';
-import { getAirportLocation } from '../OpenMeteoGeocodingService.js';
+import { OpenMeteoProvider } from './providers/openMeteoProvider.js';
+import { getAirportLocation } from '../geocoding/openMeteoGeocodingService.js';
 
 export class WeatherService {
   private provider: OpenMeteoProvider;

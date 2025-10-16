@@ -8,6 +8,7 @@ import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import flightRoutes from './routes/flightRoutes.js';
+import weatherRoutes from './routes/weatherRoutes.js';
 
 // Get the directory of the current module
 const __filename = fileURLToPath(import.meta.url);
@@ -59,9 +60,10 @@ app.get('/api/health', (req: Request, res: Response) => {
 });
 
 /**
- * Mount flight routes
+ * Mount routes
  */
 app.use('/api', flightRoutes);
+app.use('/api', weatherRoutes);
 
 /**
  * 404 handler
