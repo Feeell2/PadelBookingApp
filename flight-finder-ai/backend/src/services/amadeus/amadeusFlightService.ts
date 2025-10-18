@@ -11,6 +11,8 @@ import type {
 import type { FlightOffer } from '../../types/flight.js';
 import { FLIGHT_INSPIRATION_ERRORS } from '../../types/amadeus.js';
 import { getAmadeusToken } from './amadeusAuthService.js';
+import { convertFromPLN, convertToPLN } from '../currency/currencyConversionUtils.js';
+import { getExchangeRate } from '../currency/currencyService.js';
 
 const AMADEUS_BASE_URL = 'https://test.api.amadeus.com';
 
@@ -258,6 +260,13 @@ export async function searchFlightInspiration(
   // Get OAuth token (reuse existing getAmadeusToken function)
   const token = await getAmadeusToken();
 
+  // Convert maxPrice from PLN to EUR (Amadeus requires EUR)
+  let maxPriceInEUR = maxPrice;
+  if (maxPrice) {
+    maxPriceInEUR = await convertFromPLN(maxPrice, 'EUR');
+    console.log(`💱 [Amadeus] Converted budget: ${maxPrice} PLN → ${maxPriceInEUR} EUR`);
+  }
+
   // Build API URL with query parameters
   const baseUrl = 'https://test.api.amadeus.com/v1/shopping/flight-destinations';
   const queryParams = new URLSearchParams({
@@ -265,13 +274,13 @@ export async function searchFlightInspiration(
     ...(departureDate && { departureDate }),
     ...(oneWay !== undefined && { oneWay: oneWay.toString() }),
     ...(duration && { duration: duration.toString() }),
-    ...(maxPrice && { maxPrice: maxPrice.toString() }),
+    ...(maxPriceInEUR && { maxPrice: Math.round(maxPriceInEUR).toString() }),
     ...(viewBy && { viewBy }),
   });
-
+  console.log(queryParams.toString());
   const url = `${baseUrl}?${queryParams.toString()}`;
 
-  console.log(`✈️  [Amadeus Inspiration] Calling API for origin: ${origin}, maxPrice: ${maxPrice || 'any'}`);
+  console.log(`✈️  [Amadeus Inspiration] Calling API for origin: ${origin}, maxPrice: ${maxPriceInEUR ? `${maxPriceInEUR} EUR` : 'any'}`);
 
   try {
     const response = await fetch(url, {
@@ -300,7 +309,7 @@ export async function searchFlightInspiration(
       }
 
       const retryData: AmadeusDestinationResponse = await retryResponse.json();
-      return transformInspirationToOffers(retryData);
+      return await transformInspirationToOffers(retryData);
     }
 
     // Handle 404 - No destinations found
@@ -319,7 +328,7 @@ export async function searchFlightInspiration(
     const data: AmadeusDestinationResponse = await response.json();
     console.log(`✅ [Amadeus Inspiration] Found ${data.data?.length || 0} inspiring destinations`);
 
-    return transformInspirationToOffers(data);
+    return await transformInspirationToOffers(data);
 
   } catch (error) {
     console.error('❌ [Amadeus Inspiration] Error calling API:', error);
@@ -330,32 +339,65 @@ export async function searchFlightInspiration(
 /**
  * Transform Amadeus Inspiration response to FlightOffer format
  * Maintains compatibility with existing agent.ts expectations
+ * Converts all prices to PLN
  *
  * @param response - Amadeus destination response
- * @returns Array of FlightOffer objects
+ * @returns Promise resolving to array of FlightOffer objects
  */
-function transformInspirationToOffers(
+async function transformInspirationToOffers(
   response: AmadeusDestinationResponse
-): FlightOffer[] {
+): Promise<FlightOffer[]> {
   if (!response.data || response.data.length === 0) {
     return [];
   }
 
-  let currency = Object.keys(response.dictionaries?.currencies || {})[0];
-  
-  return response.data.map((destination) => ({
-    id: `inspiration-${destination.origin}-${destination.destination}-${destination.departureDate}`,
-    origin: destination.origin,
-    destination: getCityName(destination.destination, response.dictionaries?.locations),
-    destinationCode: destination.destination,
-    departureDate: destination.departureDate,
-    returnDate: destination.returnDate,
-    price: parseFloat(destination.price.total),
-    currency: currency,
-    airline: 'Various', // Inspiration API doesn't return specific airlines
-    duration: calculateDuration(destination.departureDate, destination.returnDate),
-    stops: 0, // Unknown from inspiration API, assume direct
-  }));
+  // Detect all unique currencies in response
+  const currencies = new Set<string>();
+  response.data.forEach(dest => {
+    // Currency is in dictionaries.currencies object (keys are currency codes)
+    const currencyCode = Object.keys(response.dictionaries?.currencies || {})[0] || 'EUR';
+    currencies.add(currencyCode);
+  });
+
+  console.log(`💱 [Amadeus] Detected currencies in response: ${Array.from(currencies).join(', ')}`);
+
+  // Pre-fetch exchange rates for all currencies (sequentially as per user requirement)
+  for (const currencyCode of currencies) {
+    if (currencyCode !== 'PLN') {
+      await getExchangeRate(currencyCode); // Loads into cache
+      console.log(`💱 [Amadeus] Pre-fetched ${currencyCode} exchange rate`);
+    }
+  }
+
+  // Convert all prices to PLN
+  const offers = await Promise.all(
+    response.data.map(async (destination) => {
+      // Get currency from dictionaries (usually EUR for Amadeus)
+      const originalCurrency = Object.keys(response.dictionaries?.currencies || {})[0] || 'EUR';
+      const originalPrice = parseFloat(destination.price.total);
+
+      // Convert to PLN
+      const priceInPLN = await convertToPLN(originalPrice, originalCurrency);
+
+      console.log(`💱 [Amadeus] ${destination.destination}: ${originalPrice} ${originalCurrency} → ${priceInPLN} PLN`);
+
+      return {
+        id: `inspiration-${destination.origin}-${destination.destination}-${destination.departureDate}`,
+        origin: destination.origin,
+        destination: getCityName(destination.destination, response.dictionaries?.locations),
+        destinationCode: destination.destination,
+        departureDate: destination.departureDate,
+        returnDate: destination.returnDate,
+        price: priceInPLN,
+        currency: 'PLN', // Always PLN after conversion
+        airline: 'Various', // Inspiration API doesn't return specific airlines
+        duration: calculateDuration(destination.departureDate, destination.returnDate),
+        stops: 0, // Unknown from inspiration API, assume direct
+      };
+    })
+  );
+
+  return offers;
 }
 
 /**

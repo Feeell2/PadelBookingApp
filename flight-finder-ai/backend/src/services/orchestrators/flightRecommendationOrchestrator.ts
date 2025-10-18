@@ -38,6 +38,8 @@ export async function runFlightAgent(preferences: UserPreferences): Promise<Agen
 
   console.log(`\n🔧 [Agent] Executing: search_flight_inspiration`);
   console.log(`🎯 [Agent] Origin: ${preferences.origin}, Budget: ${preferences.budget} PLN, Duration: ${tripDuration} days`);
+  console.log(`💱 [Currency] Budget will be converted: ${preferences.budget} PLN → EUR (for Amadeus API)`);
+  console.log(`💱 [Currency] Response prices will be converted back: EUR/USD/GBP → PLN`);
   toolsUsed.push('search_flight_inspiration');
 
   const inspirationResults = await searchFlightInspiration({

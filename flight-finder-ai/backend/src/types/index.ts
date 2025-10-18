@@ -10,3 +10,4 @@ export * from './flight.js';
 export * from './weather.js';
 export * from './openMeteo.js';
 export * from './agent.js';
+export * from './currency.js';
