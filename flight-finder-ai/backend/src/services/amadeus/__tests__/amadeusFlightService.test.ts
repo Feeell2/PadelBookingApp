@@ -332,4 +332,244 @@ describe('amadeusFlightService - Currency Conversion', () => {
       ).rejects.toThrow();
     });
   });
+
+  describe('URL Sanitization', () => {
+    it('should remove duration parameter from flightOffersUrl', async () => {
+      vi.mocked(currencyConversionUtils.convertToPLN).mockResolvedValue(426);
+      vi.mocked(currencyService.getExchangeRate).mockResolvedValue(4.2565);
+
+      const mockResponse: AmadeusDestinationResponse = {
+        data: [
+          {
+            type: 'flight-destination',
+            origin: 'WAW',
+            destination: 'BCN',
+            departureDate: '2025-11-01',
+            returnDate: '2025-11-08',
+            price: { total: '100.00', currency: 'EUR' },
+            links: {
+              flightOffers: 'https://test.api.amadeus.com/v2/shopping/flight-offers?originLocationCode=WAW&destinationLocationCode=BCN&departureDate=2025-11-01&returnDate=2025-11-08&duration=7&adults=1&max=250&currencyCode=EUR',
+              flightDates: 'https://test.api.amadeus.com/v1/shopping/flight-dates?origin=WAW&destination=BCN',
+            },
+          },
+        ],
+        dictionaries: {
+          currencies: { EUR: 'EURO' },
+          locations: { BCN: { subType: '', detailedName: 'Barcelona' } },
+        },
+      };
+
+      (fetch as any).mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockResponse,
+      });
+
+      const result = await searchFlightInspiration({ origin: 'WAW' });
+
+      // Verify duration parameter was removed from flightOffersUrl
+      expect(result[0].flightOffersUrl).toBeDefined();
+      expect(result[0].flightOffersUrl).not.toContain('duration=');
+      expect(result[0].flightOffersUrl).toContain('originLocationCode=WAW');
+      expect(result[0].flightOffersUrl).toContain('destinationLocationCode=BCN');
+    });
+
+    it('should preserve flightOffersUrl without duration parameter unchanged', async () => {
+      vi.mocked(currencyConversionUtils.convertToPLN).mockResolvedValue(426);
+      vi.mocked(currencyService.getExchangeRate).mockResolvedValue(4.2565);
+
+      const originalUrl = 'https://test.api.amadeus.com/v2/shopping/flight-offers?originLocationCode=WAW&destinationLocationCode=BCN';
+      const mockResponse: AmadeusDestinationResponse = {
+        data: [
+          {
+            type: 'flight-destination',
+            origin: 'WAW',
+            destination: 'BCN',
+            departureDate: '2025-11-01',
+            returnDate: '2025-11-08',
+            price: { total: '100.00', currency: 'EUR' },
+            links: {
+              flightOffers: originalUrl,
+              flightDates: '',
+            },
+          },
+        ],
+        dictionaries: {
+          currencies: { EUR: 'EURO' },
+          locations: { BCN: { subType: '', detailedName: 'Barcelona' } },
+        },
+      };
+
+      (fetch as any).mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockResponse,
+      });
+
+      const result = await searchFlightInspiration({ origin: 'WAW' });
+
+      // URL without duration should be unchanged
+      expect(result[0].flightOffersUrl).toBe(originalUrl);
+    });
+
+    it('should handle undefined flightOffersUrl gracefully', async () => {
+      vi.mocked(currencyConversionUtils.convertToPLN).mockResolvedValue(426);
+      vi.mocked(currencyService.getExchangeRate).mockResolvedValue(4.2565);
+
+      const mockResponse: AmadeusDestinationResponse = {
+        data: [
+          {
+            type: 'flight-destination',
+            origin: 'WAW',
+            destination: 'BCN',
+            departureDate: '2025-11-01',
+            returnDate: '2025-11-08',
+            price: { total: '100.00', currency: 'EUR' },
+            // No links field
+          },
+        ],
+        dictionaries: {
+          currencies: { EUR: 'EURO' },
+          locations: { BCN: { subType: '', detailedName: 'Barcelona' } },
+        },
+      };
+
+      (fetch as any).mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockResponse,
+      });
+
+      const result = await searchFlightInspiration({ origin: 'WAW' });
+
+      // Should handle undefined gracefully
+      expect(result[0].flightOffersUrl).toBeUndefined();
+    });
+
+    it('should remove viewBy parameter from flightOffersUrl', async () => {
+      vi.mocked(currencyConversionUtils.convertToPLN).mockResolvedValue(426);
+      vi.mocked(currencyService.getExchangeRate).mockResolvedValue(4.2565);
+
+      const mockResponse: AmadeusDestinationResponse = {
+        data: [
+          {
+            type: 'flight-destination',
+            origin: 'WAW',
+            destination: 'BCN',
+            departureDate: '2025-11-01',
+            returnDate: '2025-11-08',
+            price: { total: '100.00', currency: 'EUR' },
+            links: {
+              flightOffers: 'https://test.api.amadeus.com/v2/shopping/flight-offers?originLocationCode=WAW&destinationLocationCode=BCN&viewBy=DESTINATION&adults=1',
+              flightDates: '',
+            },
+          },
+        ],
+        dictionaries: {
+          currencies: { EUR: 'EURO' },
+          locations: { BCN: { subType: '', detailedName: 'Barcelona' } },
+        },
+      };
+
+      (fetch as any).mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockResponse,
+      });
+
+      const result = await searchFlightInspiration({ origin: 'WAW' });
+
+      // Verify viewBy parameter was removed from flightOffersUrl
+      expect(result[0].flightOffersUrl).toBeDefined();
+      expect(result[0].flightOffersUrl).not.toContain('viewBy=');
+      expect(result[0].flightOffersUrl).toContain('originLocationCode=WAW');
+      expect(result[0].flightOffersUrl).toContain('destinationLocationCode=BCN');
+      expect(result[0].flightOffersUrl).toContain('adults=1');
+    });
+
+    it('should remove both duration and viewBy parameters from flightOffersUrl', async () => {
+      vi.mocked(currencyConversionUtils.convertToPLN).mockResolvedValue(426);
+      vi.mocked(currencyService.getExchangeRate).mockResolvedValue(4.2565);
+
+      const mockResponse: AmadeusDestinationResponse = {
+        data: [
+          {
+            type: 'flight-destination',
+            origin: 'WAW',
+            destination: 'BCN',
+            departureDate: '2025-11-01',
+            returnDate: '2025-11-08',
+            price: { total: '100.00', currency: 'EUR' },
+            links: {
+              flightOffers: 'https://test.api.amadeus.com/v2/shopping/flight-offers?originLocationCode=WAW&destinationLocationCode=BCN&duration=7&viewBy=DESTINATION&adults=1&max=250',
+              flightDates: '',
+            },
+          },
+        ],
+        dictionaries: {
+          currencies: { EUR: 'EURO' },
+          locations: { BCN: { subType: '', detailedName: 'Barcelona' } },
+        },
+      };
+
+      (fetch as any).mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockResponse,
+      });
+
+      const result = await searchFlightInspiration({ origin: 'WAW' });
+
+      // Verify both parameters were removed
+      expect(result[0].flightOffersUrl).toBeDefined();
+      expect(result[0].flightOffersUrl).not.toContain('duration=');
+      expect(result[0].flightOffersUrl).not.toContain('viewBy=');
+      expect(result[0].flightOffersUrl).toContain('originLocationCode=WAW');
+      expect(result[0].flightOffersUrl).toContain('destinationLocationCode=BCN');
+      expect(result[0].flightOffersUrl).toContain('adults=1');
+      expect(result[0].flightOffersUrl).toContain('max=250');
+    });
+
+    it('should preserve other query parameters when removing duration and viewBy', async () => {
+      vi.mocked(currencyConversionUtils.convertToPLN).mockResolvedValue(426);
+      vi.mocked(currencyService.getExchangeRate).mockResolvedValue(4.2565);
+
+      const mockResponse: AmadeusDestinationResponse = {
+        data: [
+          {
+            type: 'flight-destination',
+            origin: 'WAW',
+            destination: 'BCN',
+            departureDate: '2025-11-01',
+            returnDate: '2025-11-08',
+            price: { total: '100.00', currency: 'EUR' },
+            links: {
+              flightOffers: 'https://test.api.amadeus.com/v2/shopping/flight-offers?originLocationCode=WAW&destinationLocationCode=BCN&departureDate=2025-11-01&returnDate=2025-11-08&duration=7&viewBy=DATE&adults=1&max=250&currencyCode=EUR&nonStop=false',
+              flightDates: '',
+            },
+          },
+        ],
+        dictionaries: {
+          currencies: { EUR: 'EURO' },
+          locations: { BCN: { subType: '', detailedName: 'Barcelona' } },
+        },
+      };
+
+      (fetch as any).mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockResponse,
+      });
+
+      const result = await searchFlightInspiration({ origin: 'WAW' });
+
+      // Verify problematic parameters removed but others preserved
+      expect(result[0].flightOffersUrl).toBeDefined();
+      expect(result[0].flightOffersUrl).not.toContain('duration=');
+      expect(result[0].flightOffersUrl).not.toContain('viewBy=');
+      // Verify all other parameters are preserved
+      expect(result[0].flightOffersUrl).toContain('originLocationCode=WAW');
+      expect(result[0].flightOffersUrl).toContain('destinationLocationCode=BCN');
+      expect(result[0].flightOffersUrl).toContain('departureDate=2025-11-01');
+      expect(result[0].flightOffersUrl).toContain('returnDate=2025-11-08');
+      expect(result[0].flightOffersUrl).toContain('adults=1');
+      expect(result[0].flightOffersUrl).toContain('max=250');
+      expect(result[0].flightOffersUrl).toContain('currencyCode=EUR');
+      expect(result[0].flightOffersUrl).toContain('nonStop=false');
+    });
+  });
 });

@@ -2,16 +2,31 @@
 // Results Section Component
 // ==========================================
 
+import { useState } from 'react';
 import { Brain, Clock, Wrench } from 'lucide-react';
-import type { AgentResponse } from '../types';
+import type { AgentResponse, FlightOffer } from '../types';
 import FlightCard from './FlightCard';
 import WeatherBadge from './WeatherBadge';
+import FlightDetailsModal from './FlightDetailsModal';
 
 interface ResultsSectionProps {
   results: AgentResponse;
 }
 
 export default function ResultsSection({ results }: ResultsSectionProps) {
+  const [selectedFlight, setSelectedFlight] = useState<FlightOffer | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleViewDetails = (flight: FlightOffer) => {
+    setSelectedFlight(flight);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    // Delay clearing selected flight until modal close animation finishes
+    setTimeout(() => setSelectedFlight(null), 300);
+  };
   return (
     <div className="results-section">
       {/* AI Reasoning Box */}
@@ -55,7 +70,12 @@ export default function ResultsSection({ results }: ResultsSectionProps) {
           </h3>
           <div className="flights-grid">
             {results.recommendations.map((flight, index) => (
-              <FlightCard key={flight.id} flight={flight} rank={index + 1} />
+              <FlightCard
+                key={flight.id}
+                flight={flight}
+                rank={index + 1}
+                onViewDetails={handleViewDetails}
+              />
             ))}
           </div>
         </div>
@@ -84,6 +104,15 @@ export default function ResultsSection({ results }: ResultsSectionProps) {
           </div>
         </div>
       </div>
+
+      {/* Flight Details Modal */}
+      {selectedFlight && (
+        <FlightDetailsModal
+          flight={selectedFlight}
+          isOpen={isModalOpen}
+          onClose={handleCloseModal}
+        />
+      )}
     </div>
   );
 }

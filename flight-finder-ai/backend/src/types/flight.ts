@@ -30,6 +30,8 @@ export interface FlightOffer {
   airline: string;
   duration: string; // "5h 30m"
   stops: number;
+  flightOffersUrl?: string; // Link to detailed flight offers API
+  flightDatesUrl?: string;  // Link to flexible dates API
   weatherData?: WeatherData; // Optional weather enrichment
 }
 

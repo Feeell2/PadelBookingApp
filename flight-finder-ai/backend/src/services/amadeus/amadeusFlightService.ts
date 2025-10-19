@@ -6,7 +6,9 @@
 import type {
   AmadeusFlightResponse,
   AmadeusDestinationResponse,
-  FlightInspirationParams
+  FlightInspirationParams,
+  AmadeusFlightOffersDetailResponse,
+  AmadeusFlightDatesResponse,
 } from '../../types/amadeus.js';
 import type { FlightOffer } from '../../types/flight.js';
 import { FLIGHT_INSPIRATION_ERRORS } from '../../types/amadeus.js';
@@ -277,7 +279,6 @@ export async function searchFlightInspiration(
     ...(maxPriceInEUR && { maxPrice: Math.round(maxPriceInEUR).toString() }),
     ...(viewBy && { viewBy }),
   });
-  console.log(queryParams.toString());
   const url = `${baseUrl}?${queryParams.toString()}`;
 
   console.log(`✈️  [Amadeus Inspiration] Calling API for origin: ${origin}, maxPrice: ${maxPriceInEUR ? `${maxPriceInEUR} EUR` : 'any'}`);
@@ -393,6 +394,8 @@ async function transformInspirationToOffers(
         airline: 'Various', // Inspiration API doesn't return specific airlines
         duration: calculateDuration(destination.departureDate, destination.returnDate),
         stops: 0, // Unknown from inspiration API, assume direct
+        flightOffersUrl: removeDurationParameter(destination.links?.flightOffers),
+        flightDatesUrl: destination.links?.flightDates,
       };
     })
   );
@@ -413,4 +416,174 @@ function calculateDuration(departureDate: string, returnDate: string): string {
   const diffTime = Math.abs(returnD.getTime() - departure.getTime());
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   return `${diffDays} days`;
+}
+
+/**
+ * Remove redundant parameters from Amadeus flight offers URL
+ * The duration and viewBy parameters may cause issues with the Flight Offers API
+ *
+ * @param url - Original Amadeus URL with potentially redundant parameters
+ * @returns Sanitized URL without duration and viewBy parameters
+ */
+function removeDurationParameter(url: string | undefined): string | undefined {
+  if (!url) return undefined;
+  console.log(url);
+  
+  try {
+    const urlObj = new URL(url);
+    const removedParams: string[] = [];
+
+    // Remove duration parameter (redundant - defined by dates)
+    if (urlObj.searchParams.has('duration')) {
+      urlObj.searchParams.delete('duration');
+      removedParams.push('duration');
+    }
+
+    // Remove viewBy parameter (not applicable to Flight Offers API)
+    if (urlObj.searchParams.has('viewBy')) {
+      urlObj.searchParams.delete('viewBy');
+      removedParams.push('viewBy');
+    }
+
+    const sanitizedUrl = urlObj.toString();
+    console.log(`🔧 [Amadeus] Sanitized URL: ${sanitizedUrl}`);
+    // Log removed parameters
+    if (removedParams.length > 0) {
+      console.log(`🔧 [Amadeus] Removed parameters from URL: ${removedParams.join(', ')}`);
+    }
+
+    return sanitizedUrl;
+  } catch (error) {
+    // If URL parsing fails, return original URL
+    console.warn('⚠️  [Amadeus] Failed to parse URL for parameter removal:', error);
+    return url;
+  }
+}
+
+/**
+ * Fetch detailed flight offers from Amadeus URL
+ * Converts prices from EUR to PLN
+ *
+ * @param url - Complete Amadeus flight offers URL from inspiration response
+ * @returns Promise resolving to detailed flight offers
+ */
+export async function fetchFlightOffersDetails(
+  url: string
+): Promise<AmadeusFlightOffersDetailResponse> {
+  console.log(`✈️  [Amadeus] Fetching flight offers details from URL`);
+
+  // Validate URL is from Amadeus
+  if (!url.includes('api.amadeus.com')) {
+    throw new Error('Invalid Amadeus URL');
+  }
+
+  try {
+    const token = await getAmadeusToken();
+    console.log(`🌐 [Amadeus] API Call: ${url}`);
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    // Handle 401 - Token expired, retry once
+    if (response.status === 401) {
+      console.log('🔄 [Amadeus] Token expired, retrying...');
+      const newToken = await getAmadeusToken();
+      const retryResponse = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${newToken}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!retryResponse.ok) {
+        throw new Error(`Amadeus API error: ${retryResponse.status}`);
+      }
+
+      const data: AmadeusFlightOffersDetailResponse = await retryResponse.json();
+      return data;
+    }
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`❌ [Amadeus] API error: ${response.status}`, errorText);
+      throw new Error(`Amadeus API error: ${response.status}`);
+    }
+
+    const data: AmadeusFlightOffersDetailResponse = await response.json();
+    console.log(`✅ [Amadeus] Found ${data.data?.length || 0} detailed flight offers`);
+
+    return data;
+  } catch (error) {
+    console.error('❌ [Amadeus] Error fetching flight offers details:', error);
+    throw error;
+  }
+}
+
+/**
+ * Fetch flexible date options from Amadeus URL
+ * Converts prices from original currency to PLN
+ *
+ * @param url - Complete Amadeus flight dates URL from inspiration response
+ * @returns Promise resolving to date options with PLN prices
+ */
+export async function fetchFlightDates(
+  url: string
+): Promise<AmadeusFlightDatesResponse> {
+  console.log(`📅 [Amadeus] Fetching flight dates from URL`);
+
+  // Validate URL is from Amadeus
+  if (!url.includes('api.amadeus.com')) {
+    throw new Error('Invalid Amadeus URL');
+  }
+
+  try {
+    const token = await getAmadeusToken();
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    // Handle 401 - Token expired, retry once
+    if (response.status === 401) {
+      console.log('🔄 [Amadeus] Token expired, retrying...');
+      const newToken = await getAmadeusToken();
+      const retryResponse = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${newToken}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!retryResponse.ok) {
+        throw new Error(`Amadeus API error: ${retryResponse.status}`);
+      }
+
+      const data: AmadeusFlightDatesResponse = await retryResponse.json();
+      return data;
+    }
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`❌ [Amadeus] API error: ${response.status}`, errorText);
+      throw new Error(`Amadeus API error: ${response.status}`);
+    }
+
+    const data: AmadeusFlightDatesResponse = await response.json();
+    console.log(`✅ [Amadeus] Found ${data.data?.length || 0} date alternatives`);
+
+    return data;
+  } catch (error) {
+    console.error('❌ [Amadeus] Error fetching flight dates:', error);
+    throw error;
+  }
 }

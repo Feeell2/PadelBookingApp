@@ -8,9 +8,10 @@ import type { FlightOffer } from '../types';
 interface FlightCardProps {
   flight: FlightOffer;
   rank?: number;
+  onViewDetails?: (flight: FlightOffer) => void;
 }
 
-export default function FlightCard({ flight, rank }: FlightCardProps) {
+export default function FlightCard({ flight, rank, onViewDetails }: FlightCardProps) {
   const getRankEmoji = (rank: number) => {
     if (rank === 1) return '🏆';
     if (rank === 2) return '🥈';
@@ -115,6 +116,16 @@ export default function FlightCard({ flight, rank }: FlightCardProps) {
             Direct
           </span>
         </div>
+      )}
+
+      {/* View Details Button */}
+      {(flight.flightOffersUrl || flight.flightDatesUrl) && (
+        <button
+          className="flight-view-details-button"
+          onClick={() => onViewDetails?.(flight)}
+        >
+          View Details
+        </button>
       )}
     </div>
   );

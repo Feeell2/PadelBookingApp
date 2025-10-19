@@ -149,3 +149,62 @@ export interface AmadeusLocationResponse {
     };
   }>;
 }
+
+/**
+ * Amadeus Flight Offers Detail Response
+ * Returned from the flightOffers URL in inspiration response
+ */
+export interface AmadeusFlightOffersDetailResponse {
+  data: Array<{
+    id: string;
+    price: {
+      total: string;        // "234.56"
+      currency: string;     // "EUR"
+    };
+    itineraries: Array<{
+      duration: string;     // "PT5H30M"
+      segments: Array<{
+        departure: {
+          iataCode: string; // "MAD"
+          at: string;       // "2025-10-20T08:30:00"
+          terminal?: string;
+        };
+        arrival: {
+          iataCode: string;
+          at: string;
+          terminal?: string;
+        };
+        carrierCode: string;  // "IB"
+        number: string;       // "2345"
+        aircraft: {
+          code: string;       // "320"
+        };
+        duration: string;     // "PT2H15M"
+      }>;
+    }>;
+    validatingAirlineCodes?: string[];
+  }>;
+  dictionaries?: {
+    carriers?: Record<string, string>;
+  };
+}
+
+/**
+ * Amadeus Flight Dates Response
+ * Returned from the flightDates URL in inspiration response
+ */
+export interface AmadeusFlightDatesResponse {
+  meta?: {
+    currency: string;
+  };
+  data: Array<{
+    type: string;           // "flight-date"
+    origin: string;         // "MAD"
+    destination: string;    // "BCN"
+    departureDate: string;  // "2025-10-20"
+    returnDate: string;     // "2025-10-27"
+    price: {
+      total: string;        // "150.00"
+    };
+  }>;
+}
