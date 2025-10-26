@@ -1,0 +1,6 @@
+<aura:documentation>
+	<aura:description>
+		Padel Booking Container - Aura wrapper for the LWC padelBookingApp component.
+		This component is designed for use in Force.com Sites with Guest User access.
+	</aura:description>
+</aura:documentation>

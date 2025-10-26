@@ -1,0 +1,91 @@
+<template>
+    <div class="padel-booking-container">
+        <!-- Header -->
+        <div class="slds-page-header">
+            <div class="slds-page-header__row">
+                <div class="slds-page-header__col-title">
+                    <div class="slds-media">
+                        <div class="slds-media__figure">
+                            <span class="slds-icon_container slds-icon-custom-custom27">
+                                <svg class="slds-icon slds-page-header__icon" aria-hidden="true">
+                                    <use xlink:href="/assets/icons/custom-sprite/svg/symbols.svg#custom27"></use>
+                                </svg>
+                            </span>
+                        </div>
+                        <div class="slds-media__body">
+                            <h1 class="slds-page-header__title slds-truncate" title="Rezerwacja Kortów Padel">
+                                Rezerwacja Kortów Padel
+                            </h1>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Navigation -->
+        <div class="slds-tabs_default">
+            <ul class="slds-tabs_default__nav" role="tablist">
+                <li class="slds-tabs_default__item" role="presentation">
+                    <a class="slds-tabs_default__link"
+                       role="tab"
+                       data-tab="browse"
+                       onclick={handleTabClick}
+                       aria-selected={isBrowseTabActive}
+                       aria-controls="browse-panel">
+                        Zapisz się
+                    </a>
+                </li>
+                <li class="slds-tabs_default__item" role="presentation">
+                    <a class="slds-tabs_default__link"
+                       role="tab"
+                       data-tab="create"
+                       onclick={handleTabClick}
+                       aria-selected={isCreateTabActive}
+                       aria-controls="create-panel">
+                        Stwórz wyjście
+                    </a>
+                </li>
+                <li class="slds-tabs_default__item" role="presentation">
+                    <a class="slds-tabs_default__link"
+                       role="tab"
+                       data-tab="mygames"
+                       onclick={handleTabClick}
+                       aria-selected={isMyGamesTabActive}
+                       aria-controls="mygames-panel">
+                        Moje gry
+                    </a>
+                </li>
+            </ul>
+
+            <!-- Tab Panels -->
+            <template if:true={isBrowseTabActive}>
+                <div id="browse-panel" class="slds-tabs_default__content slds-show" role="tabpanel">
+                    <c-padel-booking-list onplayeradded={handlePlayerAdded}></c-padel-booking-list>
+                </div>
+            </template>
+
+            <template if:true={isCreateTabActive}>
+                <div id="create-panel" class="slds-tabs_default__content slds-show" role="tabpanel">
+                    <c-padel-booking-form ongamecreated={handleGameCreated}></c-padel-booking-form>
+                </div>
+            </template>
+
+            <template if:true={isMyGamesTabActive}>
+                <div id="mygames-panel" class="slds-tabs_default__content slds-show" role="tabpanel">
+                    <div class="slds-m-around_medium">
+                        <h2 class="slds-text-heading_small slds-m-bottom_small">Gry, które stworzyłeś</h2>
+                        <p class="slds-text-color_weak slds-m-bottom_medium">
+                            Lista gier jest przechowywana lokalnie w Twojej przeglądarce.
+                        </p>
+                        <div class="my-games-list">
+                            <!-- Games will be loaded by padelCreatedGameItem components -->
+                            <div class="slds-text-align_center slds-m-vertical_large slds-text-color_weak">
+                                Wczytywanie...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </template>
+        </div>
+    </div>
+</template>

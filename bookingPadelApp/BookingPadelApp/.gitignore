@@ -1,0 +1,219 @@
+# Salesforce Project .gitignore
+# Best practices for Salesforce DX projects
+
+#########################
+# Salesforce DX / CLI
+#########################
+
+# Salesforce CLI local data
+.sfdx/
+.sf/
+.localdevserver/
+
+# Org authorization files (SECURITY - contains auth tokens)
+**/.sfdx/
+**/.sf/
+**/orgs/
+
+# Scratch org definition files (local variations)
+config/project-scratch-def.local.json
+
+# Deployment artifacts
+deploytmp/
+mdapioutput/
+
+# Package directories
+packaged/
+toDeploy/
+
+#########################
+# Lightning Web Components
+#########################
+
+# Node.js dependencies
+node_modules/
+
+# LWC Jest coverage
+coverage/
+**/__tests__/**/*.test.js-snapshots/
+
+# LWC local config
+**/lwc/**/*.css.lint
+**/lwc/**/*.js-meta.xml.lint
+
+# Jest cache
+.jest/
+
+# ESLint cache
+.eslintcache
+
+#########################
+# IDE & Editor Files
+#########################
+
+# Visual Studio Code
+.vscode/settings.json
+.vscode/tasks.json
+.vscode/launch.json
+.vscode/*.code-workspace
+
+# IntelliJ IDEA / JetBrains
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+*.swp
+*.swo
+*~
+
+# Emacs
+*~
+\#*\#
+.\#*
+
+#########################
+# Logs & Temp Files
+#########################
+
+# Log files
+*.log
+logs/
+*.log.*
+
+# Salesforce logs
+debug/
+trace/
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.cache
+
+# Test results
+test-results/
+testresults/
+results/
+
+#########################
+# OS-Specific Files
+#########################
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+
+#########################
+# Build & Package Files
+#########################
+
+# Ant build files
+build.properties
+build/
+
+# Maven
+target/
+
+# Gradle
+.gradle/
+build/
+
+#########################
+# Environment & Secrets
+#########################
+
+# Environment variables (SECURITY)
+.env
+.env.local
+.env.*.local
+
+# Local configuration
+local.properties
+config.local.json
+
+# Credentials and keys (SECURITY)
+*.key
+*.pem
+*.p12
+*.cer
+*.crt
+private/
+secrets/
+
+#########################
+# Documentation (temporary)
+#########################
+
+# Auto-generated documentation
+docs/autodoc/
+
+# Compiled documentation
+*.pdf.tmp
+
+#########################
+# Backup Files
+#########################
+
+# Backup files
+*.backup
+*.old
+*-old
+*-backup
+
+#########################
+# Salesforce Metadata
+#########################
+
+# Profile XMLs (optional - uncomment if using permission sets instead)
+# **/profiles/**
+
+# Retrieved metadata from production (if needed)
+# retrieved/
+# metadata-backup/
+
+#########################
+# Experience Cloud / Sites
+#########################
+
+# Local site configurations
+.site/
+
+#########################
+# Apex & Visualforce
+#########################
+
+# Compiled Apex (not typically present in source)
+*.apex.lint
+
+#########################
+# Custom Exclusions
+#########################
+
+# Add project-specific exclusions below:
+
+# Deployment scripts output
+deploy-output/
+
+# Large data files
+data/large-datasets/
+
+# Personal notes (keep project docs)
+NOTES.txt
+TODO.txt

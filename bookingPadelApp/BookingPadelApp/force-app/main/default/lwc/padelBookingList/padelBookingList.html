@@ -1,0 +1,50 @@
+<template>
+    <div class="slds-m-around_medium">
+        <!-- Loading Spinner -->
+        <template if:true={isLoading}>
+            <div class="slds-text-align_center slds-m-vertical_large">
+                <lightning-spinner alternative-text="Ładowanie..." size="medium"></lightning-spinner>
+            </div>
+        </template>
+
+        <!-- Error Message -->
+        <template if:true={error}>
+            <div class="slds-m-around_medium">
+                <div class="slds-notify slds-notify_alert slds-theme_alert-texture slds-theme_error" role="alert">
+                    <span class="slds-assistive-text">error</span>
+                    <h2>Wystąpił błąd podczas ładowania gier</h2>
+                </div>
+            </div>
+        </template>
+        <!-- Games List -->
+        <template if:false={isLoading}>
+            <template if:true={hasGames}>
+                
+                <div class="slds-grid slds-wrap slds-gutters">
+                    <template for:each={games} for:item="game">
+                        
+                        <div key={game.Id} class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-large-size_1-of-3">
+                            <c-padel-game-card
+                                game={game}
+                                onplayeradded={handlePlayerAdded}>
+                            </c-padel-game-card>
+                        </div>
+                    </template>
+                </div>
+            </template>
+
+            <template if:false={hasGames}>
+                <div class="slds-text-align_center slds-m-vertical_xx-large">
+                    <div class="slds-illustration slds-illustration_small">
+                        <div class="slds-text-longform">
+                            <h3 class="slds-text-heading_medium">{noGamesMessage}</h3>
+                            <p class="slds-text-body_regular slds-m-top_small">
+                                Przejdź do zakładki "Stwórz wyjście" aby utworzyć nową grę.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </template>
+        </template>
+    </div>
+</template>

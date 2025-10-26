@@ -1,0 +1,10 @@
+<aura:component implements="forceCommunity:availableForAllPageTypes,flexipage:availableForAllPageTypes" access="global">
+    <!--
+        This Aura component wraps the LWC padelBookingApp for use in Force.com Sites.
+        It provides a bridge between Visualforce and Lightning Web Components.
+    -->
+
+    <div class="slds-scope">
+        <c:padelBookingApp/>
+    </div>
+</aura:component>

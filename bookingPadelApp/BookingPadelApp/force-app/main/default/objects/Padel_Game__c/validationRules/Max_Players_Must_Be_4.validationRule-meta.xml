@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Max_Players_Must_Be_4</fullName>
+    <active>true</active>
+    <errorConditionFormula>Max_Players__c != 4</errorConditionFormula>
+    <errorDisplayField>Max_Players__c</errorDisplayField>
+    <errorMessage>Liczba graczy musi wynosić dokładnie 4 (standard padla)</errorMessage>
+</ValidationRule>

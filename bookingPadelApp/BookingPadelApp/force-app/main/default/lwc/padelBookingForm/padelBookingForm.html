@@ -1,0 +1,152 @@
+<template>
+    <article class="slds-card">
+        <div class="slds-card__header slds-grid">
+            <header class="slds-media slds-media_center slds-has-flexi-truncate">
+                <div class="slds-media__figure">
+                    <lightning-icon icon-name="standard:event" size="small"></lightning-icon>
+                </div>
+                <div class="slds-media__body">
+                    <h2 class="slds-card__header-title">
+                        <span class="slds-text-heading_small">Utwórz nową grę</span>
+                    </h2>
+                </div>
+            </header>
+        </div>
+
+        <div class="slds-card__body slds-card__body_inner">
+            <template if:true={isLoading}>
+                <div class="slds-align_absolute-center slds-m-vertical_medium">
+                    <lightning-spinner alternative-text="Tworzenie gry..." size="small"></lightning-spinner>
+                </div>
+            </template>
+
+            <div class="slds-form slds-form_stacked">
+                <!-- Date and Time Row -->
+                <div class="slds-grid slds-wrap slds-gutters_small">
+                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2">
+                        <lightning-input
+                            label="Data gry"
+                            name="gameDate"
+                            type="date"
+                            data-field="date"
+                            value={gameDate}
+                            min={minDate}
+                            onchange={handleInputChange}
+                            required>
+                        </lightning-input>
+                    </div>
+                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2">
+                        <lightning-input
+                            label="Godzina gry"
+                            name="gameTime"
+                            type="time"
+                            data-field="time"
+                            value={gameTime}
+                            onchange={handleInputChange}
+                            required>
+                        </lightning-input>
+                    </div>
+                </div>
+
+                <!-- Court Selection -->
+                <lightning-combobox
+                    label="Kort"
+                    name="courtName"
+                    data-field="court"
+                    value={courtName}
+                    placeholder="Wybierz kort"
+                    options={courtOptions}
+                    onchange={handleInputChange}
+                    class="slds-m-top_small"
+                    required>
+                </lightning-combobox>
+
+                <!-- Price and Max Players Row -->
+                <div class="slds-grid slds-wrap slds-gutters_small slds-m-top_small">
+                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2">
+                        <lightning-input
+                            label="Cena całkowita (zł)"
+                            name="totalPrice"
+                            type="number"
+                            data-field="price"
+                            value={totalPrice}
+                            min="0"
+                            step="0.01"
+                            formatter="currency"
+                            onchange={handleInputChange}
+                            required>
+                        </lightning-input>
+                    </div>
+                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2">
+                        <lightning-input
+                            label="Maksymalna liczba graczy"
+                            name="maxPlayers"
+                            type="number"
+                            data-field="maxPlayers"
+                            value={maxPlayers}
+                            min="2"
+                            max="8"
+                            onchange={handleInputChange}
+                            required>
+                        </lightning-input>
+                    </div>
+                </div>
+
+                <!-- Optional Fields -->
+                <div class="slds-m-top_medium">
+                    <h3 class="slds-text-heading_small slds-m-bottom_small">Opcjonalne informacje</h3>
+
+                    <lightning-input
+                        label="Email organizatora"
+                        name="creatorEmail"
+                        type="email"
+                        data-field="email"
+                        value={creatorEmail}
+                        onchange={handleInputChange}
+                        class="slds-m-top_small">
+                    </lightning-input>
+
+                    <lightning-textarea
+                        label="Notatki"
+                        name="notes"
+                        data-field="notes"
+                        value={notes}
+                        onchange={handleInputChange}
+                        placeholder="Dodatkowe informacje o grze..."
+                        class="slds-m-top_small"
+                        max-length="500">
+                    </lightning-textarea>
+                </div>
+
+                <!-- Price Per Person Preview -->
+                <template if:true={totalPrice}>
+                    <template if:true={maxPlayers}>
+                        <div class="slds-m-top_medium slds-box slds-theme_info slds-text-align_center">
+                            <p class="slds-text-body_small">Cena za osobę:</p>
+                            <p class="slds-text-heading_medium">
+                                {totalPrice} zł ÷ {maxPlayers} = {pricePerPerson} zł
+                            </p>
+                        </div>
+                    </template>
+                </template>
+            </div>
+        </div>
+
+        <footer class="slds-card__footer">
+            <div class="slds-grid slds-grid_align-spread">
+                <button
+                    class="slds-button slds-button_neutral"
+                    onclick={handleCancel}
+                    disabled={isLoading}>
+                    Anuluj
+                </button>
+                <button
+                    class="slds-button slds-button_brand"
+                    onclick={handleSubmit}
+                    disabled={isSubmitDisabled}>
+                    Utwórz grę
+                </button>
+            </div>
+        </footer>
+    </article>
+</template>

@@ -1,0 +1,63 @@
+<template>
+    <div class="slds-media slds-media_center slds-p-vertical_x-small">
+        <!-- Payment Status Icon -->
+        <div class="slds-media__figure">
+            <lightning-icon
+                icon-name={paymentIconName}
+                alternative-text={paymentStatusText}
+                size="x-small"
+                variant={paymentIconVariant}>
+            </lightning-icon>
+        </div>
+
+        <!-- Player Info -->
+        <div class="slds-media__body">
+            <div class="slds-grid slds-grid_vertical-align-center">
+                <div class="slds-col slds-has-flexi-truncate">
+                    <h3 class="slds-truncate" title={playerName}>
+                        <strong>{playerName}</strong>
+                    </h3>
+                    <div class="slds-text-body_small slds-text-color_weak">
+                        <template if:true={hasEmail}>
+                            <span class="slds-m-right_small">
+                                <lightning-icon icon-name="utility:email" size="xx-small" class="slds-m-right_xx-small"></lightning-icon>
+                                {playerEmail}
+                            </span>
+                        </template>
+                        <template if:true={hasPhone}>
+                            <span>
+                                <lightning-icon icon-name="utility:phone_portrait" size="xx-small" class="slds-m-right_xx-small"></lightning-icon>
+                                {playerPhone}
+                            </span>
+                        </template>
+                    </div>
+                    <div class="slds-text-body_small {paymentStatusClass}">
+                        {paymentStatusText}
+                    </div>
+                </div>
+
+                <!-- Actions (only visible if showActions is true) -->
+                <template if:true={showActions}>
+                    <div class="slds-col slds-no-flex">
+                        <div class="slds-button-group" role="group">
+                            <button
+                                class="slds-button slds-button_icon slds-button_icon-border-filled"
+                                title="Zmień status płatności"
+                                onclick={handlePaymentToggle}>
+                                <lightning-icon icon-name="utility:money" size="xx-small"></lightning-icon>
+                                <span class="slds-assistive-text">Zmień status płatności</span>
+                            </button>
+                            <button
+                                class="slds-button slds-button_icon slds-button_icon-border-filled"
+                                title="Usuń gracza"
+                                onclick={handleRemovePlayer}>
+                                <lightning-icon icon-name="utility:delete" size="xx-small"></lightning-icon>
+                                <span class="slds-assistive-text">Usuń gracza</span>
+                            </button>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </div>
+</template>
