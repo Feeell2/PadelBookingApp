@@ -11,8 +11,9 @@ export interface UserPreferences {
   origin: string;
   travelStyle: 'adventure' | 'relaxation' | 'culture' | 'party' | 'nature';
   preferredDestinations?: string[];
-  departureDate?: string; // YYYY-MM-DD
-  returnDate?: string; // YYYY-MM-DD
+  departureDate: string; // YYYY-MM-DD - REQUIRED
+  returnDate: string; // YYYY-MM-DD - REQUIRED
+  flexibleDates?: boolean; // Optional: Enable ±3 days search
 }
 
 /**

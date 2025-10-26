@@ -19,6 +19,56 @@ import { getExchangeRate } from '../currency/currencyService.js';
 const AMADEUS_BASE_URL = 'https://test.api.amadeus.com';
 
 /**
+ * Generate array of dates within ±N days range
+ *
+ * @param baseDate - Base date string (YYYY-MM-DD)
+ * @param flexDays - Number of days flexibility (e.g., 3 for ±3 days)
+ * @returns Array of date strings (YYYY-MM-DD) sorted chronologically
+ */
+function generateFlexibleDates(baseDate: string, flexDays: number = 3): string[] {
+  const dates: string[] = [];
+  const base = new Date(baseDate);
+
+  // Generate dates from -flexDays to +flexDays
+  for (let i = -flexDays; i <= flexDays; i++) {
+    const date = new Date(base);
+    date.setDate(date.getDate() + i);
+
+    // Format to YYYY-MM-DD
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    dates.push(`${year}-${month}-${day}`);
+  }
+
+  return dates;
+}
+
+/**
+ * Remove duplicate offers (same destination + similar dates)
+ * Keeps the cheapest offer for each destination-date combination
+ */
+function deduplicateOffers(offers: FlightOffer[]): FlightOffer[] {
+  const uniqueMap = new Map<string, FlightOffer>();
+
+  for (const offer of offers) {
+    // Create unique key: destination + departure week
+    const departureWeek = Math.floor(
+      new Date(offer.departureDate).getTime() / (7 * 24 * 60 * 60 * 1000)
+    );
+    const key = `${offer.destinationCode}-week${departureWeek}`;
+
+    // Keep only the cheapest offer for this key
+    const existing = uniqueMap.get(key);
+    if (!existing || offer.price < existing.price) {
+      uniqueMap.set(key, offer);
+    }
+  }
+
+  return Array.from(uniqueMap.values());
+}
+
+/**
  * Search for flights using Amadeus Flight Offers Search API
  */
 export async function searchAmadeusFlights(
@@ -244,7 +294,7 @@ function getCityName(
 export async function searchFlightInspiration(
   params: FlightInspirationParams
 ): Promise<FlightOffer[]> {
-  const { origin, maxPrice, departureDate, duration, oneWay, viewBy } = params;
+  const { origin, maxPrice, departureDate, duration, oneWay, viewBy, flexibleDates } = params;
 
   // Input validation
   if (!/^[A-Z]{3}$/.test(origin)) {
@@ -258,6 +308,25 @@ export async function searchFlightInspiration(
   if (duration && (duration < 1 || duration > 15)) {
     throw new Error(FLIGHT_INSPIRATION_ERRORS.INVALID_DURATION);
   }
+
+  // Flexible dates logic
+  if (flexibleDates && departureDate) {
+    console.log(`📅 [Amadeus] Flexible dates enabled: searching ±3 days from ${departureDate}`);
+    return await searchFlexibleDates(params);
+  }
+
+  // Original single-date search
+  return await searchSingleDate(params);
+}
+
+/**
+ * Search for flights on a single departure date
+ * (Original searchFlightInspiration logic)
+ */
+async function searchSingleDate(
+  params: FlightInspirationParams
+): Promise<FlightOffer[]> {
+  const { origin, maxPrice, departureDate, duration, oneWay, viewBy } = params;
 
   // Get OAuth token (reuse existing getAmadeusToken function)
   const token = await getAmadeusToken();
@@ -335,6 +404,80 @@ export async function searchFlightInspiration(
     console.error('❌ [Amadeus Inspiration] Error calling API:', error);
     throw error;
   }
+}
+
+/**
+ * Search for flights with flexible dates (±3 days)
+ * Calls API multiple times for each date in range
+ *
+ * @param params - Flight search parameters
+ * @returns Aggregated and sorted flight offers
+ */
+async function searchFlexibleDates(
+  params: FlightInspirationParams
+): Promise<FlightOffer[]> {
+  const { departureDate, duration } = params;
+
+  if (!departureDate) {
+    throw new Error('Departure date is required for flexible date search');
+  }
+
+  // Generate ±3 days range
+  const departureDates = generateFlexibleDates(departureDate, 3);
+  console.log(`📅 [Amadeus] Flexible dates: ${departureDates.join(', ')}`);
+
+  // If duration is specified, generate flexible return dates too
+  let returnDates: string[] | undefined;
+  if (duration && params.oneWay === false) {
+    const baseReturnDate = new Date(departureDate);
+    baseReturnDate.setDate(baseReturnDate.getDate() + duration);
+    const baseReturnStr = baseReturnDate.toISOString().split('T')[0];
+    returnDates = generateFlexibleDates(baseReturnStr, 3);
+    console.log(`📅 [Amadeus] Flexible return dates: ${returnDates.join(', ')}`);
+  }
+
+  // Search all date combinations
+  const allOffers: FlightOffer[] = [];
+  const searchPromises: Promise<FlightOffer[]>[] = [];
+
+  for (const depDate of departureDates) {
+    // Create search params for this date
+    const searchParams: FlightInspirationParams = {
+      ...params,
+      departureDate: depDate,
+      flexibleDates: false, // Disable recursion
+    };
+
+    // Call searchSingleDate for each departure date
+    searchPromises.push(
+      searchSingleDate(searchParams).catch(err => {
+        console.warn(`⚠️  [Amadeus] Failed to search date ${depDate}:`, err.message);
+        return []; // Return empty array on error
+      })
+    );
+  }
+
+  // Wait for all searches to complete
+  const results = await Promise.all(searchPromises);
+
+  // Flatten results
+  results.forEach(offers => {
+    allOffers.push(...offers);
+  });
+
+  console.log(`✅ [Amadeus] Flexible search found ${allOffers.length} total offers across all dates`);
+
+  // Remove duplicates (same destination, similar price)
+  const uniqueOffers = deduplicateOffers(allOffers);
+
+  // Sort by price (cheapest first)
+  const sorted = uniqueOffers.sort((a, b) => a.price - b.price);
+
+  // Return top 15 offers
+  const topOffers = sorted.slice(0, 15);
+  console.log(`✅ [Amadeus] Returning top ${topOffers.length} offers from flexible search`);
+
+  return topOffers;
 }
 
 /**

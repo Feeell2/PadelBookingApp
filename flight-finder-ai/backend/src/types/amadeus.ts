@@ -94,6 +94,7 @@ export interface FlightInspirationParams {
   duration?: number;                 // Optional: trip duration in days (1-15)
   maxPrice?: number;                 // Optional: maximum price
   viewBy?: 'DATE' | 'DESTINATION' | 'DURATION' | 'WEEK' | 'COUNTRY';
+  flexibleDates?: boolean;           // Optional: Enable ±3 days search
 }
 
 /**

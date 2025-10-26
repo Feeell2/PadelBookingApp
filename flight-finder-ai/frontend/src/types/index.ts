@@ -12,6 +12,7 @@ export interface UserPreferences {
   preferredDestinations?: string[];
   departureDate?: string;
   returnDate?: string;
+  flexibleDates?: boolean;      // Flexible dates flag for ±3 days search
 }
 
 /**

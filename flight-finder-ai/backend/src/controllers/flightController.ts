@@ -7,6 +7,88 @@ import { runFlightAgent } from '../services/orchestrators/flightRecommendationOr
 import type { UserPreferences, ApiResponse } from '../types/index.js';
 
 /**
+ * Validate date parameters
+ *
+ * @param departureDate - Departure date string (YYYY-MM-DD)
+ * @param returnDate - Return date string (YYYY-MM-DD)
+ * @returns Validation result with error message if invalid
+ */
+function validateDates(
+  departureDate: any,
+  returnDate: any
+): { valid: boolean; error?: string } {
+  // 1. Check if dates are provided (REQUIRED)
+  if (!departureDate || typeof departureDate !== 'string') {
+    return { valid: false, error: 'Departure date is required (format: YYYY-MM-DD)' };
+  }
+
+  if (!returnDate || typeof returnDate !== 'string') {
+    return { valid: false, error: 'Return date is required (format: YYYY-MM-DD)' };
+  }
+
+  // 2. Validate format (YYYY-MM-DD)
+  const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+  if (!dateRegex.test(departureDate)) {
+    return { valid: false, error: 'Invalid departure date format. Use YYYY-MM-DD' };
+  }
+
+  if (!dateRegex.test(returnDate)) {
+    return { valid: false, error: 'Invalid return date format. Use YYYY-MM-DD' };
+  }
+
+  // 3. Parse dates
+  const departure = new Date(departureDate);
+  const returnD = new Date(returnDate);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  // Check if dates are valid
+  if (isNaN(departure.getTime())) {
+    return { valid: false, error: 'Invalid departure date' };
+  }
+
+  if (isNaN(returnD.getTime())) {
+    return { valid: false, error: 'Invalid return date' };
+  }
+
+  // 4. Check if departure is in the future (at least tomorrow)
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  if (departure < tomorrow) {
+    return { valid: false, error: 'Departure date must be at least tomorrow' };
+  }
+
+  // 5. Check if departure is within 330 days (Amadeus API limit)
+  const maxDate = new Date(today);
+  maxDate.setDate(maxDate.getDate() + 330);
+
+  if (departure > maxDate) {
+    return { valid: false, error: 'Departure date cannot be more than 330 days in the future' };
+  }
+
+  // 6. Check if return is after departure
+  if (returnD <= departure) {
+    return { valid: false, error: 'Return date must be after departure date' };
+  }
+
+  // 7. Check trip length (minimum 1 day, maximum 30 days)
+  const tripDays = Math.ceil(
+    (returnD.getTime() - departure.getTime()) / (1000 * 60 * 60 * 24)
+  );
+
+  if (tripDays < 1) {
+    return { valid: false, error: 'Trip must be at least 1 day long' };
+  }
+
+  if (tripDays > 30) {
+    return { valid: false, error: 'Trip cannot be longer than 30 days' };
+  }
+
+  return { valid: true };
+}
+
+/**
  * Validate user preferences
  */
 function validateUserPreferences(body: any): { valid: boolean; error?: string } {
@@ -21,6 +103,17 @@ function validateUserPreferences(body: any): { valid: boolean; error?: string } 
   const validTravelStyles = ['adventure', 'relaxation', 'culture', 'party', 'nature'];
   if (!body.travelStyle || !validTravelStyles.includes(body.travelStyle)) {
     return { valid: false, error: `Travel style must be one of: ${validTravelStyles.join(', ')}` };
+  }
+
+  // Validate dates (REQUIRED)
+  const dateValidation = validateDates(body.departureDate, body.returnDate);
+  if (!dateValidation.valid) {
+    return dateValidation;
+  }
+
+  // Validate flexibleDates (optional, but must be boolean if provided)
+  if (body.flexibleDates !== undefined && typeof body.flexibleDates !== 'boolean') {
+    return { valid: false, error: 'flexibleDates must be a boolean' };
   }
 
   return { valid: true };
@@ -55,8 +148,9 @@ export async function searchFlights(req: Request, res: Response): Promise<void> 
       origin: req.body.origin,
       travelStyle: req.body.travelStyle,
       preferredDestinations: req.body.preferredDestinations,
-      departureDate: req.body.departureDate,
-      returnDate: req.body.returnDate,
+      departureDate: req.body.departureDate,        // Now required
+      returnDate: req.body.returnDate,              // Now required
+      flexibleDates: req.body.flexibleDates || false, // New field
     };
 
     // Run AI agent
