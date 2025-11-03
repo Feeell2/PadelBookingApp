@@ -45,16 +45,6 @@
                         Stwórz wyjście
                     </a>
                 </li>
-                <li class="slds-tabs_default__item" role="presentation">
-                    <a class="slds-tabs_default__link"
-                       role="tab"
-                       data-tab="mygames"
-                       onclick={handleTabClick}
-                       aria-selected={isMyGamesTabActive}
-                       aria-controls="mygames-panel">
-                        Moje gry
-                    </a>
-                </li>
             </ul>
 
             <!-- Tab Panels -->
@@ -67,23 +57,6 @@
             <template if:true={isCreateTabActive}>
                 <div id="create-panel" class="slds-tabs_default__content slds-show" role="tabpanel">
                     <c-padel-booking-form ongamecreated={handleGameCreated}></c-padel-booking-form>
-                </div>
-            </template>
-
-            <template if:true={isMyGamesTabActive}>
-                <div id="mygames-panel" class="slds-tabs_default__content slds-show" role="tabpanel">
-                    <div class="slds-m-around_medium">
-                        <h2 class="slds-text-heading_small slds-m-bottom_small">Gry, które stworzyłeś</h2>
-                        <p class="slds-text-color_weak slds-m-bottom_medium">
-                            Lista gier jest przechowywana lokalnie w Twojej przeglądarce.
-                        </p>
-                        <div class="my-games-list">
-                            <!-- Games will be loaded by padelCreatedGameItem components -->
-                            <div class="slds-text-align_center slds-m-vertical_large slds-text-color_weak">
-                                Wczytywanie...
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </template>
         </div>

@@ -1,0 +1,59 @@
+<template>
+    <lightning-card title="[TITLE]" icon-name="[ICON]">
+        
+        <!-- Loading Spinner -->
+        <template if:true={isLoading}>
+            <lightning-spinner alternative-text="Loading"></lightning-spinner>
+        </template>
+
+        <!-- Error Message -->
+        <template if:true={error}>
+            <div class="slds-text-color_error slds-m-around_small">
+                {error}
+            </div>
+        </template>
+
+        <!-- Main Content -->
+        <template if:false={isLoading}>
+            <div class="slds-p-around_small">
+                
+                <!-- Search/Filter -->
+                <lightning-input
+                    label="Search"
+                    value={searchTerm}
+                    onchange={handleSearch}
+                    class="slds-m-bottom_small">
+                </lightning-input>
+
+                <!-- Data Table -->
+                <template if:true={records}>
+                    <lightning-datatable
+                        key-field="id"
+                        data={records}
+                        columns={columns}
+                        onrowaction={handleRowAction}
+                        hide-checkbox-column>
+                    </lightning-datatable>
+                </template>
+
+                <!-- Empty State -->
+                <template if:false={hasRecords}>
+                    <div class="slds-text-align_center slds-m-around_large">
+                        <p>No records found</p>
+                    </div>
+                </template>
+
+            </div>
+        </template>
+
+        <!-- Footer Actions -->
+        <div slot="footer" class="slds-text-align_right">
+            <lightning-button
+                label="Refresh"
+                icon-name="utility:refresh"
+                onclick={handleRefresh}>
+            </lightning-button>
+        </div>
+
+    </lightning-card>
+</template>

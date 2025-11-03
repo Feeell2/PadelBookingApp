@@ -26,7 +26,9 @@
                         <div key={game.Id} class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-large-size_1-of-3">
                             <c-padel-game-card
                                 game={game}
-                                onplayeradded={handlePlayerAdded}>
+                                onplayeradded={handlePlayerAdded}
+                                ongamedeleted={handleGameDeleted}
+                                ongameupdated={handleGameUpdated}>
                             </c-padel-game-card>
                         </div>
                     </template>

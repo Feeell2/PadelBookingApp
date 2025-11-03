@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Court_Required</fullName>
+    <active>false</active>
+    <errorConditionFormula>ISBLANK(Court__c)</errorConditionFormula>
+    <errorDisplayField>Court__c</errorDisplayField>
+    <errorMessage>Kort jest wymagany</errorMessage>
+</ValidationRule>

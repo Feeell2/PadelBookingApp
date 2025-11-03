@@ -2,7 +2,7 @@
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Current_Players__c</fullName>
     <label>Current Players</label>
-    <summaryForeignKey>Padel_Player__c.Game__c</summaryForeignKey>
+    <summaryForeignKey>Padel_Game_Registration__c.Game__c</summaryForeignKey>
     <summaryOperation>count</summaryOperation>
     <trackTrending>false</trackTrending>
     <type>Summary</type>

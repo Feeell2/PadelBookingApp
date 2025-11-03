@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Player_Required</fullName>
+    <active>false</active>
+    <errorConditionFormula>ISBLANK(Player__c)</errorConditionFormula>
+    <errorDisplayField>Player__c</errorDisplayField>
+    <errorMessage>Gracz jest wymagany</errorMessage>
+</ValidationRule>

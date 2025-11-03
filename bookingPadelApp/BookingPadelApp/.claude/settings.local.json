@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(sf project deploy start:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

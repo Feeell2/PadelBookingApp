@@ -1,0 +1,32 @@
+/* Use SLDS utility classes primarily - custom CSS sparingly */
+
+.custom-container {
+    padding: 1rem;
+}
+
+.custom-header {
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .custom-container {
+        padding: 0.5rem;
+    }
+}
+
+/* Status colors */
+.status-active {
+    color: #2e844a;
+}
+
+.status-inactive {
+    color: #c23934;
+}
+
+/* Loading state */
+.loading-overlay {
+    position: relative;
+    opacity: 0.6;
+}
